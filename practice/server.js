@@ -39,24 +39,36 @@ server.on("request", (req, res) => {
         const form = formidable.IncomingForm({
             uploadDir: __dirname,
             keepExtensions: true,
-            maxFileSize: 5 * 1024 * 1024, // 5 megs
+            maxFileSize: 51 * 1024 * 1024, // 5 megs
             multiples: true
         });
-        form.parse(req, (err, fields, files) => {
-            if (err) {
-                console.log(err);
-                res.statusCode = 501;
-                res.end("Error!");
-            }
-            else {
-                console.log(`Fields:\n`);
-                console.log(fields);
-                console.log(`\nFiles:\n`);
-                console.log(files);
-                res.statusCode = 200;
-                res.end("Upload succeeded!");
-            }
-        })
+
+        form.parse(req)
+            .on('fileBegin', (name, file) => {
+                console.log('Our upload has started!');
+            })
+            .on('file', (name, file) => {
+                console.log('Field + file pair has been received');
+            })
+            .on('field', (name, value) => {
+                console.log('Field received:');
+                console.log(name, value);
+            })
+            .on('progress', (bytesReceived, bytesExpected) => {
+                console.log(bytesReceived + ' / ' + bytesExpected);
+            })
+            .on('error', (err) => {
+                console.error(err);
+                // paused automatically on error, manually resume
+                req.resume();
+            })
+            .on('aborted', () => {
+                console.error('Request aborted by the user!');
+            })
+            .on('end', () => {
+                console.log('Done - request fully received!');
+                res.end('Success!');
+            });
     } else {
         fs.createReadStream("./index.html").pipe(res);
     }
