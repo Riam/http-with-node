@@ -9,7 +9,18 @@ server.on("request", (req, res) => {
         const id = parsedUrl.query.id;
         metadata = services.fetchImageMetadata(id);
         console.log(req.headers);
-    };
+    }
+
+    let buffer = [];
+    req.on("data", (chunk) => {
+        buffer.push(chunk);
+    }).on("end", () => {
+        const parsedJson = JSON.parse(Buffer.concat(buffer));
+        console.log(parsedJson[0].userName);
+        services.createUser(parsedJson[0].userName)
+    });
 });
+
+
 
 server.listen(2131);

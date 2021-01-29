@@ -3,5 +3,11 @@
     "axios": "^0.21.1",
     "body": "^5.1.0",
     "formidable": "1.2.0"
+  },
+  "scripts": {
+    "start": "nodemon ./practice/server.js"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
