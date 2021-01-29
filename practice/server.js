@@ -2,9 +2,19 @@ const http = require("http");
 const url = require("url");
 const services = require("../services");
 const jsonBody = require("body/json");
+const fs = require("fs");
+const formidable = require("formidable");
 
 const server = http.createServer();
 server.on("request", (req, res) => {
+    req.on("error", (err) => {
+        console.error(`request error: ${err}`);
+    });
+
+    res.on("error", (err) => {
+        console.error(`request error: ${err}`);
+    });
+
     let parsedUrl = url.parse(req.url, true);
     if (req.method === "GET" && parsedUrl.pathname === "/metadata") {
         const id = parsedUrl.query.id;
@@ -13,7 +23,7 @@ server.on("request", (req, res) => {
         res.statusCode = 200;
         res.write(JSON.stringify(metadata));
         res.end();
-    } else if (req.method === "POST" && parsedUrl.pathname === "/user") {
+    } else if (req.method === "POST" && parsedUrl.pathname === "/users") {
         jsonBody(req, res, (err, body) => {
             if (err) {
                 console.error(err);
@@ -25,12 +35,30 @@ server.on("request", (req, res) => {
                 res.end();
             }
         });
+    } else if (req.method === "POST" && parsedUrl.pathname === "/upload") {
+        const form = formidable.IncomingForm({
+            uploadDir: __dirname,
+            keepExtensions: true,
+            maxFileSize: 5 * 1024 * 1024, // 5 megs
+            multiples: true
+        });
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+                console.log(err);
+                res.statusCode = 501;
+                res.end("Error!");
+            }
+            else {
+                console.log(`Fields:\n`);
+                console.log(fields);
+                console.log(`\nFiles:\n`);
+                console.log(files);
+                res.statusCode = 200;
+                res.end("Upload succeeded!");
+            }
+        })
     } else {
-        res.statusCode = 404;
-        res.setHeader("X-Powered-By", "Node");
-        res.setHeader("Content-Type", "application/json");
-
-        res.end();
+        fs.createReadStream("./index.html").pipe(res);
     }
 
 
